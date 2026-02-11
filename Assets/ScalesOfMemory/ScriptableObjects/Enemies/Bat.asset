@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97ebc1d18477868499ab3e56d3f01dfe, type: 3}
+  m_Name: Bat
+  m_EditorClassIdentifier: 
+  enemyName: Bat
+  maxHP: 13
+  minAttack: 7
+  maxAttack: 10
+  trait: 1
+  bodyShape: 0
+  bodyColor: {r: 0.3137255, g: 0.3137255, b: 0.39215687, a: 1}
+  eyeColor: {r: 1, g: 0.19607843, b: 0.19607843, a: 1}
+  bodyScale: 0.5
+  intentPatterns:
+  - type: 0
+    weight: 1
+    conditionTurnMod: 0
+    hpThreshold: 1
+    description: Bite
+  splitCount: 0
+  splitInto: {fileID: 0}

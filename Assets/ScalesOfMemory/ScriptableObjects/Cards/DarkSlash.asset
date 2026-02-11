@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57befd97e8ee4ae4fb1e14bbc862f7c7, type: 3}
+  m_Name: DarkSlash
+  m_EditorClassIdentifier: 
+  cardName: Dark Slash
+  description: Deal 4 damage. Apply Poison(3t).
+  manaCost: 1
+  element: 7
+  cardType: 0
+  baseDamage: 4
+  baseBlock: 0
+  healAmount: 0
+  drawCount: 0
+  needsTarget: 1
+  appliedEffect: {fileID: 11400000, guid: f896fdbca7c8bad448904d7771f0d277, type: 2}
+  effectDuration: 3
+  effectPotency: 2
