@@ -70,7 +70,7 @@ public static class EnemyAI
         switch (intent.Type)
         {
             case IntentType.Attack:
-                player.TakeDamage(intent.Value);
+                player.TakeDamage(intent.Value, enemy.Data.element);
                 break;
             case IntentType.Defend:
                 enemy.AddBlock(intent.Value);

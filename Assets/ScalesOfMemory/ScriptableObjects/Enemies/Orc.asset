@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Orc
   m_EditorClassIdentifier: 
   enemyName: Orc
+  element: 1
   maxHP: 42
   minAttack: 13
   maxAttack: 20

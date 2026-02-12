@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Bat
   m_EditorClassIdentifier: 
   enemyName: Bat
+  element: 7
   maxHP: 13
   minAttack: 7
   maxAttack: 10

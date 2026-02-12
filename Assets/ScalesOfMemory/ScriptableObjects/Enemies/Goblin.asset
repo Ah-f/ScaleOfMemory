@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Goblin
   m_EditorClassIdentifier: 
   enemyName: Goblin
+  element: 0
   maxHP: 25
   minAttack: 8
   maxAttack: 13

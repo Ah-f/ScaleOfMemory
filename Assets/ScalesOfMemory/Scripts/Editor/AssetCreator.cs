@@ -127,9 +127,10 @@ public static class AssetCreator
     {
         EnsureFolders();
 
-        // Goblin
+        // Goblin (no element)
         var goblin = CreateEnemy("Goblin", "Goblin", 25, 8, 13, EnemyTrait.None,
             PrimitiveType.Sphere, new Color32(50, 180, 50, 255), Color.red, 0.8f);
+        goblin.element = ElementType.None;
         goblin.intentPatterns = new IntentPattern[]
         {
             new IntentPattern { type = IntentType.Attack, weight = 3, hpThreshold = 1f, description = "Attack" },
@@ -137,17 +138,20 @@ public static class AssetCreator
         };
         EditorUtility.SetDirty(goblin);
 
-        // Slime
+        // MiniSlime (Nature)
         var miniSlime = CreateEnemy("MiniSlime", "Mini Slime", 8, 3, 5, EnemyTrait.None,
             PrimitiveType.Sphere, new Color32(50, 200, 200, 255), new Color32(200, 255, 255, 255), 0.4f);
+        miniSlime.element = ElementType.Nature;
         miniSlime.intentPatterns = new IntentPattern[]
         {
             new IntentPattern { type = IntentType.Attack, weight = 1, hpThreshold = 1f, description = "Slap" }
         };
         EditorUtility.SetDirty(miniSlime);
 
+        // Slime (Nature)
         var slime = CreateEnemy("Slime", "Slime", 17, 5, 8, EnemyTrait.Splitting,
             PrimitiveType.Sphere, new Color32(50, 200, 200, 255), new Color32(200, 255, 255, 255), 0.7f);
+        slime.element = ElementType.Nature;
         slime.splitCount = 2;
         slime.splitInto = miniSlime;
         slime.intentPatterns = new IntentPattern[]
@@ -156,18 +160,20 @@ public static class AssetCreator
         };
         EditorUtility.SetDirty(slime);
 
-        // Bat
+        // Bat (Dark)
         var bat = CreateEnemy("Bat", "Bat", 13, 7, 10, EnemyTrait.Flying,
             PrimitiveType.Sphere, new Color32(80, 80, 100, 255), new Color32(255, 50, 50, 255), 0.5f);
+        bat.element = ElementType.Dark;
         bat.intentPatterns = new IntentPattern[]
         {
             new IntentPattern { type = IntentType.Attack, weight = 1, hpThreshold = 1f, description = "Bite" }
         };
         EditorUtility.SetDirty(bat);
 
-        // Orc
+        // Orc (Fire)
         var orc = CreateEnemy("Orc", "Orc", 42, 13, 20, EnemyTrait.Charging,
             PrimitiveType.Cube, new Color32(140, 90, 50, 255), new Color32(255, 200, 50, 255), 1.2f);
+        orc.element = ElementType.Fire;
         orc.intentPatterns = new IntentPattern[]
         {
             new IntentPattern { type = IntentType.Attack, weight = 2, hpThreshold = 1f, description = "Smash" },
@@ -175,9 +181,10 @@ public static class AssetCreator
         };
         EditorUtility.SetDirty(orc);
 
-        // Skeleton
+        // Skeleton (Dark)
         var skeleton = CreateEnemy("Skeleton", "Skeleton", 30, 10, 17, EnemyTrait.Summoning,
             PrimitiveType.Capsule, new Color32(220, 210, 190, 255), new Color32(100, 255, 100, 255), 0.9f);
+        skeleton.element = ElementType.Dark;
         skeleton.intentPatterns = new IntentPattern[]
         {
             new IntentPattern { type = IntentType.Attack, weight = 2, hpThreshold = 1f, description = "Slash" },

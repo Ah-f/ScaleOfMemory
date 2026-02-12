@@ -18,12 +18,25 @@ public class BattleUIManager : MonoBehaviour
     // Enemy HP (top-left, Pokemon style)
     List<EnemyView> _enemyViews = new List<EnemyView>();
 
-    // Player Info (bottom-right, Pokemon style)
-    Image _playerHPFill;
-    TextMeshProUGUI _playerHPText;
+    // Player Info — Combined Defense Bar
+    RectTransform _hpFillRT;
+    RectTransform _scalesFillRT;
+    RectTransform _blockFillRT;
+    Image _hpFillImg;
+    Image _scalesFillImg;
+    Image _blockFillImg;
+    TextMeshProUGUI _defenseText; // "HP:60 SC:15 BK:5"
     TextMeshProUGUI _manaText;
-    TextMeshProUGUI _blockText;
-    RectTransform _playerHPBar;
+
+    // Player status effect icons
+    RectTransform _playerStatusRow;
+    List<GameObject> _playerStatusIcons = new List<GameObject>();
+    int _lastPlayerStatusHash;
+
+    // Cached values for combined bar
+    int _cachedHP, _cachedMaxHP;
+    int _cachedScales, _cachedMaxScales;
+    int _cachedBlock;
 
     // Card Hand
     HandView _handView;
@@ -48,6 +61,14 @@ public class BattleUIManager : MonoBehaviour
     {
         BuildUI();
         SubscribeEvents();
+
+        // Initialize cached values
+        _cachedMaxHP = BattleConstants.PLAYER_MAX_HP;
+        _cachedHP = _cachedMaxHP;
+        _cachedMaxScales = BattleConstants.PLAYER_BASE_SCALES;
+        _cachedScales = _cachedMaxScales;
+        _cachedBlock = 0;
+        UpdateCombinedBar();
     }
 
     void Update()
@@ -61,6 +82,105 @@ public class BattleUIManager : MonoBehaviour
                 _timerText.color = t <= 5f ? BattleConstants.Danger : Color.white;
             }
         }
+
+        UpdatePlayerStatusIcons();
+    }
+
+    void UpdatePlayerStatusIcons()
+    {
+        if (BattleManager.Instance == null || BattleManager.Instance.Player == null) return;
+        if (_playerStatusRow == null) return;
+
+        var effects = BattleManager.Instance.Player.StatusEffects;
+        int hash = ComputeStatusHash(effects);
+        if (hash == _lastPlayerStatusHash) return;
+        _lastPlayerStatusHash = hash;
+
+        // Clear old
+        foreach (var icon in _playerStatusIcons)
+        {
+            if (icon != null) Destroy(icon);
+        }
+        _playerStatusIcons.Clear();
+
+        // Build new
+        int count = 0;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            if (effects[i].IsExpired) continue;
+            count++;
+        }
+
+        int idx = 0;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var effect = effects[i];
+            if (effect.IsExpired) continue;
+
+            float iconWidth = 1f / Mathf.Max(count, 5);
+            float x = idx * iconWidth;
+
+            var iconGo = CreateStatusBadge(_playerStatusRow, effect, x, x + iconWidth * 0.9f);
+            _playerStatusIcons.Add(iconGo);
+            idx++;
+        }
+    }
+
+    GameObject CreateStatusBadge(RectTransform parent, StatusEffectInstance effect, float xMin, float xMax)
+    {
+        var badge = new GameObject("StatusBadge", typeof(RectTransform), typeof(Image));
+        badge.transform.SetParent(parent, false);
+        var brt = badge.GetComponent<RectTransform>();
+        brt.anchorMin = new Vector2(xMin, 0f);
+        brt.anchorMax = new Vector2(xMax, 1f);
+        brt.offsetMin = new Vector2(1, 0);
+        brt.offsetMax = new Vector2(-1, 0);
+        badge.GetComponent<Image>().color = effect.Data.iconColor;
+
+        var textGo = new GameObject("Text", typeof(RectTransform));
+        textGo.transform.SetParent(badge.transform, false);
+        var trt = textGo.GetComponent<RectTransform>();
+        trt.anchorMin = Vector2.zero;
+        trt.anchorMax = Vector2.one;
+        trt.offsetMin = Vector2.zero;
+        trt.offsetMax = Vector2.zero;
+
+        var tmp = textGo.AddComponent<TextMeshProUGUI>();
+        string initial = GetEffectInitial(effect.Data.type);
+        string stackText = effect.Potency > 1 ? $"{initial}{effect.Potency}" : initial;
+        tmp.text = $"{stackText} <size=70%>{effect.RemainingDuration}t</size>";
+        tmp.fontSize = 14;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.enableWordWrapping = false;
+
+        return badge;
+    }
+
+    static string GetEffectInitial(StatusEffectType type)
+    {
+        switch (type)
+        {
+            case StatusEffectType.Burn: return "B";
+            case StatusEffectType.Freeze: return "F";
+            case StatusEffectType.Poison: return "P";
+            case StatusEffectType.Weakness: return "W";
+            case StatusEffectType.Strength: return "S";
+            default: return "?";
+        }
+    }
+
+    static int ComputeStatusHash(List<StatusEffectInstance> effects)
+    {
+        int hash = effects.Count;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            hash = hash * 31 + (int)effects[i].Data.type;
+            hash = hash * 31 + effects[i].RemainingDuration;
+            hash = hash * 31 + effects[i].Potency;
+        }
+        return hash;
     }
 
     void BuildUI()
@@ -143,55 +263,132 @@ public class BattleUIManager : MonoBehaviour
     }
 
     // Player info - bottom RIGHT (Pokemon style)
+    // Combined defense bar: [HP green | Scales gold | Block orange | empty]
+    // + status icons row + mana
     void BuildPlayerInfoPanel()
     {
         var panel = CreatePanel("PlayerPanel", transform,
-            new Vector2(0.45f, 0.28f), new Vector2(0.98f, 0.40f));
+            new Vector2(0.45f, 0.24f), new Vector2(0.98f, 0.42f));
         panel.GetComponent<Image>().color = new Color(0.08f, 0.08f, 0.15f, 0.85f);
         var rt = panel.GetComponent<RectTransform>();
 
-        // Player name
-        CreateText("PlayerName", rt, "Player", 22,
-            new Vector2(0.05f, 0.65f), new Vector2(0.5f, 1f));
+        // Top row: Player name + defense stats text
+        CreateText("PlayerName", rt, "Player", 20,
+            new Vector2(0.05f, 0.78f), new Vector2(0.35f, 1f));
 
-        // HP Bar background
-        var hpBg = CreatePanel("HPBarBg", rt,
-            new Vector2(0.05f, 0.35f), new Vector2(0.95f, 0.6f));
-        hpBg.GetComponent<Image>().color = new Color32(40, 40, 40, 255);
+        _defenseText = CreateText("DefenseText", rt, "", 16,
+            new Vector2(0.35f, 0.78f), new Vector2(0.95f, 1f));
+        _defenseText.alignment = TextAlignmentOptions.Right;
 
-        // HP label
-        var hpLabel = CreateText("HPLabel", hpBg.GetComponent<RectTransform>(), "HP", 14,
-            new Vector2(-0.12f, 0f), new Vector2(0.02f, 1f));
-        hpLabel.color = BattleConstants.Highlight;
-        hpLabel.alignment = TextAlignmentOptions.Right;
+        // Combined bar background
+        var barBg = CreatePanel("DefenseBarBg", rt,
+            new Vector2(0.05f, 0.52f), new Vector2(0.95f, 0.76f));
+        barBg.GetComponent<Image>().color = new Color32(30, 30, 30, 255);
+        var barBgRT = barBg.GetComponent<RectTransform>();
 
-        // HP Bar fill
-        var hpFill = CreatePanel("HPBarFill", hpBg.GetComponent<RectTransform>(),
-            new Vector2(0f, 0f), new Vector2(1f, 1f));
-        _playerHPFill = hpFill.GetComponent<Image>();
-        _playerHPFill.color = BattleConstants.Safe;
-        _playerHPBar = hpFill.GetComponent<RectTransform>();
+        // HP fill (leftmost, green)
+        var hpFill = CreatePanel("HPFill", barBgRT,
+            new Vector2(0f, 0f), new Vector2(0.8f, 1f));
+        _hpFillImg = hpFill.GetComponent<Image>();
+        _hpFillImg.color = BattleConstants.Safe;
+        _hpFillRT = hpFill.GetComponent<RectTransform>();
 
-        // HP text
-        _playerHPText = CreateText("HPText", rt, "80/80", 20,
-            new Vector2(0.5f, 0.65f), new Vector2(0.95f, 1f));
-        _playerHPText.alignment = TextAlignmentOptions.Right;
+        // Scales fill (after HP, gold)
+        var scalesFill = CreatePanel("ScalesFill", barBgRT,
+            new Vector2(0.8f, 0f), new Vector2(1f, 1f));
+        _scalesFillImg = scalesFill.GetComponent<Image>();
+        _scalesFillImg.color = BattleConstants.Scales;
+        _scalesFillRT = scalesFill.GetComponent<RectTransform>();
 
-        // Mana + Block row
-        _manaText = CreateText("ManaText", rt, "Mana: 3", 22,
-            new Vector2(0.05f, 0f), new Vector2(0.5f, 0.35f));
+        // Block fill (after Scales, orange)
+        var blockFill = CreatePanel("BlockFill", barBgRT,
+            new Vector2(0f, 0f), new Vector2(0f, 1f));
+        _blockFillImg = blockFill.GetComponent<Image>();
+        _blockFillImg.color = BattleConstants.Highlight;
+        _blockFillRT = blockFill.GetComponent<RectTransform>();
+
+        // Status icons row (between bar and mana)
+        var statusRowGo = new GameObject("PlayerStatusRow", typeof(RectTransform));
+        statusRowGo.transform.SetParent(rt, false);
+        _playerStatusRow = statusRowGo.GetComponent<RectTransform>();
+        _playerStatusRow.anchorMin = new Vector2(0.05f, 0.30f);
+        _playerStatusRow.anchorMax = new Vector2(0.95f, 0.50f);
+        _playerStatusRow.offsetMin = Vector2.zero;
+        _playerStatusRow.offsetMax = Vector2.zero;
+
+        // Bottom row: Mana
+        _manaText = CreateText("ManaText", rt, "Mana: 3", 20,
+            new Vector2(0.05f, 0f), new Vector2(0.95f, 0.28f));
         _manaText.color = BattleConstants.Magic;
+    }
 
-        _blockText = CreateText("BlockText", rt, "", 22,
-            new Vector2(0.5f, 0f), new Vector2(0.95f, 0.35f));
-        _blockText.alignment = TextAlignmentOptions.Right;
-        _blockText.color = BattleConstants.Highlight;
+    // Update the combined HP/Scales/Block bar
+    void UpdateCombinedBar()
+    {
+        // Total max = MaxHP + MaxScales (Block has no fixed max, so it extends the bar)
+        float totalMax = _cachedMaxHP + _cachedMaxScales;
+        if (totalMax <= 0) return;
+
+        float hpRatio = _cachedHP / totalMax;
+        float scalesRatio = _cachedScales / totalMax;
+        float blockRatio = _cachedBlock / totalMax;
+
+        // HP: 0 to hpRatio
+        if (_hpFillRT != null)
+        {
+            _hpFillRT.anchorMin = new Vector2(0f, 0f);
+            _hpFillRT.anchorMax = new Vector2(hpRatio, 1f);
+        }
+        if (_hpFillImg != null)
+        {
+            float hpPct = _cachedMaxHP > 0 ? (float)_cachedHP / _cachedMaxHP : 0f;
+            _hpFillImg.color = Color.Lerp(BattleConstants.Danger, BattleConstants.Safe, hpPct);
+        }
+
+        // Scales: hpRatio to hpRatio+scalesRatio
+        if (_scalesFillRT != null)
+        {
+            _scalesFillRT.anchorMin = new Vector2(hpRatio, 0f);
+            _scalesFillRT.anchorMax = new Vector2(hpRatio + scalesRatio, 1f);
+        }
+        if (_scalesFillImg != null)
+        {
+            float scPct = _cachedMaxScales > 0 ? (float)_cachedScales / _cachedMaxScales : 0f;
+            Color c = BattleConstants.Scales;
+            if (scPct < 0.3f) c = Color.Lerp(BattleConstants.Danger, BattleConstants.Scales, scPct / 0.3f);
+            _scalesFillImg.color = c;
+        }
+
+        // Block: hpRatio+scalesRatio to hpRatio+scalesRatio+blockRatio
+        if (_blockFillRT != null)
+        {
+            float blockStart = hpRatio + scalesRatio;
+            float blockEnd = Mathf.Min(blockStart + blockRatio, 1f); // clamp to bar width
+            _blockFillRT.anchorMin = new Vector2(blockStart, 0f);
+            _blockFillRT.anchorMax = new Vector2(blockEnd, 1f);
+        }
+
+        // Defense text
+        if (_defenseText != null)
+        {
+            string text = $"<color=#{ColorToHex(BattleConstants.Safe)}>HP:{_cachedHP}</color>";
+            text += $" <color=#{ColorToHex(BattleConstants.Scales)}>SC:{_cachedScales}</color>";
+            if (_cachedBlock > 0)
+                text += $" <color=#{ColorToHex(BattleConstants.Highlight)}>BK:{_cachedBlock}</color>";
+            _defenseText.text = text;
+            _defenseText.richText = true;
+        }
+    }
+
+    static string ColorToHex(Color c)
+    {
+        return ColorUtility.ToHtmlStringRGB(c);
     }
 
     void BuildHandArea()
     {
         var handPanel = CreatePanel("HandPanel", transform,
-            new Vector2(0f, 0.05f), new Vector2(1f, 0.28f));
+            new Vector2(0f, 0.05f), new Vector2(1f, 0.24f));
         Destroy(handPanel.GetComponent<Image>());
 
         _handView = handPanel.AddComponent<HandView>();
@@ -270,6 +467,7 @@ public class BattleUIManager : MonoBehaviour
     void SubscribeEvents()
     {
         GameEvents.OnPlayerHPChanged += OnPlayerHPChanged;
+        GameEvents.OnScalesChanged += OnScalesChanged;
         GameEvents.OnManaChanged += OnManaChanged;
         GameEvents.OnBlockChanged += OnBlockChanged;
         GameEvents.OnTurnChanged += OnTurnChanged;
@@ -281,25 +479,28 @@ public class BattleUIManager : MonoBehaviour
 
     void OnPlayerHPChanged(int current, int max)
     {
-        float ratio = (float)current / max;
-        if (_playerHPBar != null)
-            _playerHPBar.anchorMax = new Vector2(ratio, 1f);
-        if (_playerHPFill != null)
-            _playerHPFill.color = Color.Lerp(BattleConstants.Danger, BattleConstants.Safe, ratio);
-        if (_playerHPText != null)
-            _playerHPText.text = $"{current}/{max}";
+        _cachedHP = current;
+        _cachedMaxHP = max;
+        UpdateCombinedBar();
+    }
+
+    void OnScalesChanged(int current, int max)
+    {
+        _cachedScales = current;
+        _cachedMaxScales = max;
+        UpdateCombinedBar();
+    }
+
+    void OnBlockChanged(int current)
+    {
+        _cachedBlock = current;
+        UpdateCombinedBar();
     }
 
     void OnManaChanged(int current)
     {
         if (_manaText != null)
             _manaText.text = $"Mana: {current}";
-    }
-
-    void OnBlockChanged(int current)
-    {
-        if (_blockText != null)
-            _blockText.text = current > 0 ? $"Block: {current}" : "";
     }
 
     void OnTurnChanged(int turn)
@@ -428,6 +629,7 @@ public class BattleUIManager : MonoBehaviour
     void OnDestroy()
     {
         GameEvents.OnPlayerHPChanged -= OnPlayerHPChanged;
+        GameEvents.OnScalesChanged -= OnScalesChanged;
         GameEvents.OnManaChanged -= OnManaChanged;
         GameEvents.OnBlockChanged -= OnBlockChanged;
         GameEvents.OnTurnChanged -= OnTurnChanged;

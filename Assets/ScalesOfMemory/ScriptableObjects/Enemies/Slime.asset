@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Slime
   m_EditorClassIdentifier: 
   enemyName: Slime
+  element: 5
   maxHP: 17
   minAttack: 5
   maxAttack: 8

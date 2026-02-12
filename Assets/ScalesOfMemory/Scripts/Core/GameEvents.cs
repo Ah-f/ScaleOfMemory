@@ -10,6 +10,7 @@ public static class GameEvents
     public static event Action<int, int> OnPlayerHPChanged;
     public static event Action<int> OnManaChanged;
     public static event Action<int> OnBlockChanged;
+    public static event Action<int, int> OnScalesChanged; // current, max
     public static event Action<BattleState> OnPhaseChanged;
     public static event Action<bool> OnBattleEnd;
     public static event Action<int> OnTurnChanged;
@@ -24,6 +25,7 @@ public static class GameEvents
     public static void PlayerHPChanged(int current, int max) => OnPlayerHPChanged?.Invoke(current, max);
     public static void ManaChanged(int current) => OnManaChanged?.Invoke(current);
     public static void BlockChanged(int current) => OnBlockChanged?.Invoke(current);
+    public static void ScalesChanged(int current, int max) => OnScalesChanged?.Invoke(current, max);
     public static void PhaseChanged(BattleState state) => OnPhaseChanged?.Invoke(state);
     public static void BattleEnd(bool playerWon) => OnBattleEnd?.Invoke(playerWon);
     public static void TurnChanged(int turn) => OnTurnChanged?.Invoke(turn);
@@ -40,6 +42,7 @@ public static class GameEvents
         OnPlayerHPChanged = null;
         OnManaChanged = null;
         OnBlockChanged = null;
+        OnScalesChanged = null;
         OnPhaseChanged = null;
         OnBattleEnd = null;
         OnTurnChanged = null;

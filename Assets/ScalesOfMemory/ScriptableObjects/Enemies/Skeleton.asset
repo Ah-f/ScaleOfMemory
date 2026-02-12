@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Skeleton
   m_EditorClassIdentifier: 
   enemyName: Skeleton
+  element: 7
   maxHP: 30
   minAttack: 10
   maxAttack: 17

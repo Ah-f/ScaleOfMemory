@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class EnemyView : MonoBehaviour
 {
@@ -9,10 +10,14 @@ public class EnemyView : MonoBehaviour
 
     Image _hpFill;
     RectTransform _hpFillRect;
-    TextMeshProUGUI _hpText;
-    TextMeshProUGUI _nameText;
+    TextMeshProUGUI _nameHPText;
     TextMeshProUGUI _intentText;
     Button _targetBtn;
+
+    // Status effect icons
+    RectTransform _statusRow;
+    List<GameObject> _statusIcons = new List<GameObject>();
+    int _lastStatusHash;
 
     public EnemyInstance Enemy => _enemy;
 
@@ -21,15 +26,15 @@ public class EnemyView : MonoBehaviour
         _enemy = enemy;
         _root = root;
 
-        // Enemy name
-        _nameText = CreateText("Name", root, enemy.Data.enemyName, 22,
+        // Name + HP (top row, merged)
+        _nameHPText = CreateText("NameHP", root, "", 18,
             new Vector2(0.05f, 0.75f), new Vector2(0.95f, 1f));
-        _nameText.alignment = TextAlignmentOptions.Center;
-        _nameText.color = BattleConstants.Highlight;
+        _nameHPText.alignment = TextAlignmentOptions.Center;
+        UpdateNameHP();
 
         // HP bar bg
         var hpBg = CreatePanel("HPBg", root,
-            new Vector2(0.1f, 0.55f), new Vector2(0.9f, 0.72f));
+            new Vector2(0.1f, 0.58f), new Vector2(0.9f, 0.73f));
         hpBg.GetComponent<Image>().color = new Color32(40, 40, 40, 255);
 
         // HP fill
@@ -39,14 +44,18 @@ public class EnemyView : MonoBehaviour
         _hpFill.color = BattleConstants.Danger;
         _hpFillRect = hpFillGo.GetComponent<RectTransform>();
 
-        // HP text
-        _hpText = CreateText("HPText", root, $"{enemy.CurrentHP}/{enemy.MaxHP}", 18,
-            new Vector2(0.1f, 0.38f), new Vector2(0.9f, 0.55f));
-        _hpText.alignment = TextAlignmentOptions.Center;
+        // Status icons row (between HP bar and intent)
+        var statusRowGo = new GameObject("StatusRow", typeof(RectTransform));
+        statusRowGo.transform.SetParent(root, false);
+        _statusRow = statusRowGo.GetComponent<RectTransform>();
+        _statusRow.anchorMin = new Vector2(0.05f, 0.38f);
+        _statusRow.anchorMax = new Vector2(0.95f, 0.56f);
+        _statusRow.offsetMin = Vector2.zero;
+        _statusRow.offsetMax = Vector2.zero;
 
         // Intent
-        _intentText = CreateText("Intent", root, "", 20,
-            new Vector2(0.05f, 0.05f), new Vector2(0.95f, 0.35f));
+        _intentText = CreateText("Intent", root, "", 18,
+            new Vector2(0.05f, 0.02f), new Vector2(0.95f, 0.36f));
         _intentText.alignment = TextAlignmentOptions.Center;
         _intentText.color = Color.yellow;
 
@@ -65,6 +74,15 @@ public class EnemyView : MonoBehaviour
     void Update()
     {
         UpdateIntent();
+        UpdateStatusIcons();
+    }
+
+    void UpdateNameHP()
+    {
+        if (_enemy == null || _nameHPText == null) return;
+        string nameColor = ColorUtility.ToHtmlStringRGB(BattleConstants.Highlight);
+        _nameHPText.richText = true;
+        _nameHPText.text = $"<color=#{nameColor}>{_enemy.Data.enemyName}</color>  {_enemy.CurrentHP}/{_enemy.MaxHP}";
     }
 
     void UpdateIntent()
@@ -87,13 +105,104 @@ public class EnemyView : MonoBehaviour
         }
     }
 
+    void UpdateStatusIcons()
+    {
+        if (_enemy == null || _statusRow == null) return;
+
+        // Simple hash to avoid rebuilding every frame
+        int hash = ComputeStatusHash(_enemy.StatusEffects);
+        if (hash == _lastStatusHash) return;
+        _lastStatusHash = hash;
+
+        // Clear old icons
+        foreach (var icon in _statusIcons)
+        {
+            if (icon != null) Destroy(icon);
+        }
+        _statusIcons.Clear();
+
+        // Build new icons
+        var effects = _enemy.StatusEffects;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            var effect = effects[i];
+            if (effect.IsExpired) continue;
+
+            float iconWidth = 1f / Mathf.Max(effects.Count, 4); // max 4 icons wide
+            float x = i * iconWidth;
+
+            var iconGo = CreateStatusIcon(_statusRow, effect, x, x + iconWidth * 0.9f);
+            _statusIcons.Add(iconGo);
+        }
+    }
+
+    GameObject CreateStatusIcon(RectTransform parent, StatusEffectInstance effect, float xMin, float xMax)
+    {
+        // Badge background
+        var badge = new GameObject("StatusBadge", typeof(RectTransform), typeof(Image));
+        badge.transform.SetParent(parent, false);
+        var brt = badge.GetComponent<RectTransform>();
+        brt.anchorMin = new Vector2(xMin, 0f);
+        brt.anchorMax = new Vector2(xMax, 1f);
+        brt.offsetMin = new Vector2(1, 0);
+        brt.offsetMax = new Vector2(-1, 0);
+
+        var img = badge.GetComponent<Image>();
+        img.color = effect.Data.iconColor;
+
+        // Text: initial + duration
+        var textGo = new GameObject("Text", typeof(RectTransform));
+        textGo.transform.SetParent(badge.transform, false);
+        var trt = textGo.GetComponent<RectTransform>();
+        trt.anchorMin = Vector2.zero;
+        trt.anchorMax = Vector2.one;
+        trt.offsetMin = Vector2.zero;
+        trt.offsetMax = Vector2.zero;
+
+        var tmp = textGo.AddComponent<TextMeshProUGUI>();
+        string initial = GetEffectInitial(effect.Data.type);
+        string stackText = effect.Potency > 1 ? $"{initial}{effect.Potency}" : initial;
+        tmp.text = $"{stackText}\n<size=70%>{effect.RemainingDuration}t</size>";
+        tmp.fontSize = 12;
+        tmp.color = Color.white;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.enableWordWrapping = false;
+
+        return badge;
+    }
+
+    static string GetEffectInitial(StatusEffectType type)
+    {
+        switch (type)
+        {
+            case StatusEffectType.Burn: return "B";
+            case StatusEffectType.Freeze: return "F";
+            case StatusEffectType.Poison: return "P";
+            case StatusEffectType.Weakness: return "W";
+            case StatusEffectType.Strength: return "S";
+            default: return "?";
+        }
+    }
+
+    static int ComputeStatusHash(List<StatusEffectInstance> effects)
+    {
+        int hash = effects.Count;
+        for (int i = 0; i < effects.Count; i++)
+        {
+            hash = hash * 31 + (int)effects[i].Data.type;
+            hash = hash * 31 + effects[i].RemainingDuration;
+            hash = hash * 31 + effects[i].Potency;
+        }
+        return hash;
+    }
+
     void OnHPChanged(int current, int max)
     {
         float ratio = (float)current / max;
         if (_hpFillRect != null)
             _hpFillRect.anchorMax = new Vector2(ratio, 1f);
-        if (_hpText != null)
-            _hpText.text = $"{current}/{max}";
+        UpdateNameHP();
     }
 
     void OnDefeated()
@@ -104,7 +213,6 @@ public class EnemyView : MonoBehaviour
     void OnClicked()
     {
         if (_enemy == null || _enemy.IsDead) return;
-        // Notify hand view to target this enemy
         if (HandView.Instance != null)
             HandView.Instance.SetTarget(_enemy);
     }

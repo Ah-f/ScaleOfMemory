@@ -116,6 +116,9 @@ public class BattleManager : MonoBehaviour
         // Reset block
         Player.ResetBlockAtTurnStart();
 
+        // Restore scales to max
+        Player.RestoreScalesToMax();
+
         // Clear player status effects
         Player.StatusEffects.Clear();
 

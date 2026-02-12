@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class EnemyData : ScriptableObject
 {
     public string enemyName;
+    public ElementType element = ElementType.None;
     public int maxHP;
     public int minAttack;
     public int maxAttack;

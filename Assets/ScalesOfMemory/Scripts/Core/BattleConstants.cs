@@ -12,8 +12,10 @@ public static class BattleConstants
     public const float QUICK_PLAY_WINDOW = 3f;
     public const float QUICK_PLAY_BONUS = 1.2f;
     public const int PLAYER_MAX_HP = 80;
+    public const int PLAYER_BASE_SCALES = 20;
 
     // Colors
+    public static readonly Color Scales = new Color32(200, 160, 60, 255);
     public static readonly Color Background = new Color32(15, 15, 26, 255);
     public static readonly Color Panel = new Color32(26, 26, 46, 255);
     public static readonly Color Highlight = new Color32(244, 162, 97, 255);
