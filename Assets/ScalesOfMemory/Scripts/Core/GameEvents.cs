@@ -17,6 +17,12 @@ public static class GameEvents
     public static event Action OnHandChanged;
     public static event Action<StatusEffectInstance, bool> OnStatusEffectChanged; // bool=isEnemy
     public static event Action<int, int> OnEncounterChanged; // current, total
+    public static event Action OnRunStateChanged;
+    public static event Action<EnemyInstance> OnEnemyDodged;
+    public static event Action<EnemyInstance, int> OnEnemyBlocked; // enemy, blocked amount
+    public static event Action<int> OnPlayerBlockAbsorbed;   // amount blocked
+    public static event Action<int> OnPlayerScalesAbsorbed;  // amount absorbed
+    public static event Action<EnemyInstance, int> OnEnemyAttacking; // enemy, damage (before hit)
 
     public static void CardPlayed(CardInstance card) => OnCardPlayed?.Invoke(card);
     public static void EnemyDamaged(EnemyInstance enemy, int dmg) => OnEnemyDamaged?.Invoke(enemy, dmg);
@@ -32,6 +38,12 @@ public static class GameEvents
     public static void HandChanged() => OnHandChanged?.Invoke();
     public static void StatusEffectChanged(StatusEffectInstance effect, bool isEnemy) => OnStatusEffectChanged?.Invoke(effect, isEnemy);
     public static void EncounterChanged(int current, int total) => OnEncounterChanged?.Invoke(current, total);
+    public static void RunStateChanged() => OnRunStateChanged?.Invoke();
+    public static void EnemyDodged(EnemyInstance enemy) => OnEnemyDodged?.Invoke(enemy);
+    public static void EnemyBlocked(EnemyInstance enemy, int amount) => OnEnemyBlocked?.Invoke(enemy, amount);
+    public static void PlayerBlockAbsorbed(int amount) => OnPlayerBlockAbsorbed?.Invoke(amount);
+    public static void PlayerScalesAbsorbed(int amount) => OnPlayerScalesAbsorbed?.Invoke(amount);
+    public static void EnemyAttacking(EnemyInstance enemy, int damage) => OnEnemyAttacking?.Invoke(enemy, damage);
 
     public static void Clear()
     {
@@ -49,5 +61,11 @@ public static class GameEvents
         OnHandChanged = null;
         OnStatusEffectChanged = null;
         OnEncounterChanged = null;
+        OnRunStateChanged = null;
+        OnEnemyDodged = null;
+        OnEnemyBlocked = null;
+        OnPlayerBlockAbsorbed = null;
+        OnPlayerScalesAbsorbed = null;
+        OnEnemyAttacking = null;
     }
 }

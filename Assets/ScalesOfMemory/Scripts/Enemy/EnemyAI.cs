@@ -70,6 +70,7 @@ public static class EnemyAI
         switch (intent.Type)
         {
             case IntentType.Attack:
+                GameEvents.EnemyAttacking(enemy, intent.Value);
                 player.TakeDamage(intent.Value, enemy.Data.element);
                 break;
             case IntentType.Defend:

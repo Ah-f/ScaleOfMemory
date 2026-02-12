@@ -28,21 +28,18 @@ public class EnemyInstance
     public void TakeDamage(int damage)
     {
         if (Data.trait == EnemyTrait.Flying && UnityEngine.Random.value < 0.5f)
-            return; // 50% dodge
+        {
+            GameEvents.EnemyDodged(this);
+            return;
+        }
 
         int remaining = damage;
         if (CurrentBlock > 0)
         {
-            if (CurrentBlock >= remaining)
-            {
-                CurrentBlock -= remaining;
-                remaining = 0;
-            }
-            else
-            {
-                remaining -= CurrentBlock;
-                CurrentBlock = 0;
-            }
+            int blocked = Mathf.Min(CurrentBlock, remaining);
+            CurrentBlock -= blocked;
+            remaining -= blocked;
+            GameEvents.EnemyBlocked(this, blocked);
         }
 
         CurrentHP = Mathf.Max(0, CurrentHP - remaining);

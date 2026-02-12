@@ -66,3 +66,20 @@ public class EncounterSetup
 {
     public EnemyData[] enemies;
 }
+
+public enum RoomType
+{
+    Battle,
+    Elite,
+    Rest,
+    Shop,
+    Event,
+    Boss
+}
+
+public enum RunPhase
+{
+    Phase1,
+    Phase2,
+    Phase3
+}

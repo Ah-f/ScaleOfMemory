@@ -48,15 +48,42 @@ public class DamagePopup : MonoBehaviour
 
     void Init(int amount, Color color)
     {
+        InitText(amount.ToString(), 36, color);
+    }
+
+    void InitText(string msg, int fontSize, Color color)
+    {
         _text = gameObject.AddComponent<TextMeshProUGUI>();
-        _text.text = amount.ToString();
-        _text.fontSize = 36;
+        _text.text = msg;
+        _text.fontSize = fontSize;
         _text.color = color;
         _text.alignment = TextAlignmentOptions.Center;
+        _text.fontStyle = FontStyles.Bold;
         _text.raycastTarget = false;
 
         _startPos = transform.localPosition;
         _elapsed = 0f;
+    }
+
+    public static void CreateText(Transform parent, Vector3 worldPos, string message, Color color)
+    {
+        var go = new GameObject("TextPopup", typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+
+        var rt = go.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.sizeDelta = new Vector2(200, 60);
+
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            Vector2 screenPos = cam.WorldToScreenPoint(worldPos);
+            rt.position = screenPos;
+        }
+
+        var popup = go.AddComponent<DamagePopup>();
+        popup.InitText(message, 30, color);
     }
 
     void Update()

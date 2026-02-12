@@ -45,23 +45,46 @@ public class BattleManager : MonoBehaviour
             Turns.Update(Time.deltaTime);
     }
 
+    bool _useGameManager;
+
     // Called once at start — initializes player, deck, turns
     void InitFirstBattle()
     {
         _currentEncounter = 0;
+        _useGameManager = GameManager.Instance != null && GameManager.Instance.CurrentRun != null;
 
-        // Player
-        Player = new PlayerBattleState(BattleConstants.PLAYER_MAX_HP);
-        Mana = new ManaSystem(BattleConstants.INITIAL_MANA);
-
-        // Deck
-        Deck = new DeckManager();
-        if (starterDeck != null)
+        if (_useGameManager)
         {
-            foreach (var card in starterDeck)
-                Deck.AddCardToDeck(new CardInstance(card));
+            var run = GameManager.Instance.CurrentRun;
+
+            Player = new PlayerBattleState(run.maxHP, run.maxScales);
+            Player.SetHP(run.currentHP);
+            Player.SetScales(run.currentScales, run.maxScales);
+            Mana = new ManaSystem(BattleConstants.INITIAL_MANA);
+
+            Deck = new DeckManager();
+            foreach (var cardName in run.deckCardNames)
+            {
+                var cardData = GameManager.Instance.ResolveCard(cardName);
+                if (cardData != null)
+                    Deck.AddCardToDeck(new CardInstance(cardData));
+            }
+            Deck.ShuffleDraw();
         }
-        Deck.ShuffleDraw();
+        else
+        {
+            // Standalone mode (direct scene testing)
+            Player = new PlayerBattleState(BattleConstants.PLAYER_MAX_HP);
+            Mana = new ManaSystem(BattleConstants.INITIAL_MANA);
+
+            Deck = new DeckManager();
+            if (starterDeck != null)
+            {
+                foreach (var card in starterDeck)
+                    Deck.AddCardToDeck(new CardInstance(card));
+            }
+            Deck.ShuffleDraw();
+        }
 
         // Turn Manager
         Turns = new TurnManager();
@@ -161,13 +184,13 @@ public class BattleManager : MonoBehaviour
 
     void SpawnEnemies()
     {
-        if (encounters == null || _currentEncounter >= encounters.Length) return;
-        var encounterData = encounters[_currentEncounter].enemies;
-        if (encounterData == null) return;
+        EnemyData[] encounterData = GetEncounterEnemies();
+        if (encounterData == null || encounterData.Length == 0) return;
 
         for (int i = 0; i < encounterData.Length; i++)
         {
             var data = encounterData[i];
+            if (data == null) continue;
             var enemy = new EnemyInstance(data);
 
             // Pokemon style: enemies top-right, adjust spacing by count
@@ -186,6 +209,27 @@ public class BattleManager : MonoBehaviour
         foreach (var enemy in Enemies)
         {
             enemy.CurrentIntent = EnemyAI.DecideNextIntent(enemy, Turns.TurnNumber);
+        }
+    }
+
+    EnemyData[] GetEncounterEnemies()
+    {
+        if (_useGameManager)
+        {
+            var node = GameManager.Instance.CurrentRun.pendingBattleNode;
+            if (node == null || node.enemyNames == null) return null;
+            var list = new List<EnemyData>();
+            foreach (var name in node.enemyNames)
+            {
+                var data = GameManager.Instance.ResolveEnemy(name);
+                if (data != null) list.Add(data);
+            }
+            return list.ToArray();
+        }
+        else
+        {
+            if (encounters == null || _currentEncounter >= encounters.Length) return null;
+            return encounters[_currentEncounter].enemies;
         }
     }
 
@@ -363,6 +407,15 @@ public class BattleManager : MonoBehaviour
         _battleEnded = true;
         StopAllCoroutines();
         Turns.ChangeState(victory ? BattleState.Victory : BattleState.Defeat);
+
+        // Write back to RunState
+        if (_useGameManager)
+        {
+            var run = GameManager.Instance.CurrentRun;
+            run.currentHP = Player.CurrentHP;
+            run.currentScales = Player.CurrentScales;
+        }
+
         GameEvents.BattleEnd(victory);
     }
 

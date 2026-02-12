@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 149d700c77c3c4a499168b3cc838c9cb, type: 3}
+  m_Name: RunConfig
+  m_EditorClassIdentifier: 
+  startHP: 80
+  startScales: 20
+  startGold: 0
+  starterDeck:
+  - {fileID: 11400000, guid: 9064264fd81756946bc439099d69922a, type: 2}
+  - {fileID: 11400000, guid: 811a1e620070e5042aba1a13d9a449f9, type: 2}
+  - {fileID: 11400000, guid: 295ba3f1e1ea97946af5dbc9a90578d6, type: 2}
+  - {fileID: 11400000, guid: 9636dd137913e8143a5d1601d3e61a71, type: 2}
+  - {fileID: 11400000, guid: da62e713a88d79a42ac7390012da294d, type: 2}
+  - {fileID: 11400000, guid: d49287e56c82c4949890acaf9a4d0433, type: 2}
+  - {fileID: 11400000, guid: fc31cbf938e7ec14a9989c1cd130165d, type: 2}
+  - {fileID: 11400000, guid: cc38ee609fa9a924b8234153df17f965, type: 2}
+  - {fileID: 11400000, guid: ce3e6a7a7acc20544827742422356b9b, type: 2}
+  - {fileID: 11400000, guid: bc82eb2a102b6f74993f7c0dd498289d, type: 2}
+  allCards:
+  - {fileID: 11400000, guid: 9064264fd81756946bc439099d69922a, type: 2}
+  - {fileID: 11400000, guid: 811a1e620070e5042aba1a13d9a449f9, type: 2}
+  - {fileID: 11400000, guid: 295ba3f1e1ea97946af5dbc9a90578d6, type: 2}
+  - {fileID: 11400000, guid: 9636dd137913e8143a5d1601d3e61a71, type: 2}
+  - {fileID: 11400000, guid: da62e713a88d79a42ac7390012da294d, type: 2}
+  - {fileID: 11400000, guid: d49287e56c82c4949890acaf9a4d0433, type: 2}
+  - {fileID: 11400000, guid: fc31cbf938e7ec14a9989c1cd130165d, type: 2}
+  - {fileID: 11400000, guid: cc38ee609fa9a924b8234153df17f965, type: 2}
+  - {fileID: 11400000, guid: ce3e6a7a7acc20544827742422356b9b, type: 2}
+  - {fileID: 11400000, guid: bc82eb2a102b6f74993f7c0dd498289d, type: 2}
+  rowsPerPhase: 5
+  minNodesPerRow: 2
+  maxNodesPerRow: 4
+  battleWeight: 0.5
+  eliteWeight: 0.15
+  restWeight: 0.15
+  shopWeight: 0.1
+  eventWeight: 0.1
+  normalEnemies:
+  - {fileID: 11400000, guid: 06d9e4ce11499f5428f0334f68259580, type: 2}
+  - {fileID: 11400000, guid: e4c6c2737bc0d3e4f970b7d5b84ee2b5, type: 2}
+  - {fileID: 11400000, guid: e2b81a0a2f37257418e21fe1cecbc425, type: 2}
+  eliteEnemies:
+  - {fileID: 11400000, guid: 593baefb33dfdbb4685402a3f91a1e20, type: 2}
+  - {fileID: 11400000, guid: ec9ed15e209b28243b9a309e1e033417, type: 2}
+  bossEnemies:
+  - {fileID: 11400000, guid: 593baefb33dfdbb4685402a3f91a1e20, type: 2}

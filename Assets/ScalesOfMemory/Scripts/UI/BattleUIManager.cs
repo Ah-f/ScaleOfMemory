@@ -69,6 +69,13 @@ public class BattleUIManager : MonoBehaviour
         _cachedScales = _cachedMaxScales;
         _cachedBlock = 0;
         UpdateCombinedBar();
+
+        // Catch up if BattleManager already drew cards before we subscribed
+        if (BattleManager.Instance != null && BattleManager.Instance.Deck != null
+            && BattleManager.Instance.Deck.Hand.Count > 0)
+        {
+            OnHandChanged();
+        }
     }
 
     void Update()
@@ -325,8 +332,9 @@ public class BattleUIManager : MonoBehaviour
     // Update the combined HP/Scales/Block bar
     void UpdateCombinedBar()
     {
-        // Total max = MaxHP + MaxScales (Block has no fixed max, so it extends the bar)
-        float totalMax = _cachedMaxHP + _cachedMaxScales;
+        // Total includes block so it always has space in the bar
+        float baseMax = _cachedMaxHP + _cachedMaxScales;
+        float totalMax = Mathf.Max(baseMax, _cachedHP + _cachedScales + _cachedBlock);
         if (totalMax <= 0) return;
 
         float hpRatio = _cachedHP / totalMax;
@@ -359,13 +367,12 @@ public class BattleUIManager : MonoBehaviour
             _scalesFillImg.color = c;
         }
 
-        // Block: hpRatio+scalesRatio to hpRatio+scalesRatio+blockRatio
+        // Block: right after HP+Scales
         if (_blockFillRT != null)
         {
             float blockStart = hpRatio + scalesRatio;
-            float blockEnd = Mathf.Min(blockStart + blockRatio, 1f); // clamp to bar width
             _blockFillRT.anchorMin = new Vector2(blockStart, 0f);
-            _blockFillRT.anchorMax = new Vector2(blockEnd, 1f);
+            _blockFillRT.anchorMax = new Vector2(blockStart + blockRatio, 1f);
         }
 
         // Defense text
@@ -452,11 +459,23 @@ public class BattleUIManager : MonoBehaviour
 
     void OnResultButtonClicked()
     {
-        if (BattleManager.Instance == null) return;
-
         _resultPanel.SetActive(false);
 
-        // If there's a next encounter, go to it
+        bool hasGameManager = GameManager.Instance != null && GameManager.Instance.CurrentRun != null;
+
+        if (hasGameManager)
+        {
+            // Map mode: navigate via GameManager
+            if (BattleManager.Instance != null &&
+                BattleManager.Instance.Turns.CurrentState == BattleState.Victory)
+                GameManager.Instance.OnBattleVictory();
+            else
+                GameManager.Instance.OnBattleDefeat();
+            return;
+        }
+
+        // Standalone mode
+        if (BattleManager.Instance == null) return;
         if (_hasNextEncounter)
         {
             _hasNextEncounter = false;
@@ -527,39 +546,50 @@ public class BattleUIManager : MonoBehaviour
         _resultPanel.SetActive(true);
 
         _hasNextEncounter = false;
+        bool hasGameManager = GameManager.Instance != null && GameManager.Instance.CurrentRun != null;
 
         if (victory)
         {
-            var bm = BattleManager.Instance;
-            if (bm != null && !bm.IsLastEncounter)
+            if (hasGameManager)
             {
-                // Mid-run victory
-                _hasNextEncounter = true;
-                int current = bm.CurrentEncounter + 1;
-                int total = bm.TotalEncounters;
-                _resultText.text = $"Battle {current}/{total} Clear!";
+                // Map mode: return to map
+                _resultText.text = "VICTORY!";
                 _resultText.color = BattleConstants.Highlight;
-                _resultSubText.text = $"Next: Battle {current + 1}";
+                _resultSubText.text = "Returning to map...";
                 if (_resultBtnLabel != null)
-                    _resultBtnLabel.text = "NEXT";
+                    _resultBtnLabel.text = "CONTINUE";
             }
             else
             {
-                // Final victory
-                _resultText.text = "ALL CLEAR!";
-                _resultText.color = BattleConstants.Highlight;
-                _resultSubText.text = "All encounters defeated!";
-                if (_resultBtnLabel != null)
-                    _resultBtnLabel.text = "OK";
+                var bm = BattleManager.Instance;
+                if (bm != null && !bm.IsLastEncounter)
+                {
+                    _hasNextEncounter = true;
+                    int current = bm.CurrentEncounter + 1;
+                    int total = bm.TotalEncounters;
+                    _resultText.text = $"Battle {current}/{total} Clear!";
+                    _resultText.color = BattleConstants.Highlight;
+                    _resultSubText.text = $"Next: Battle {current + 1}";
+                    if (_resultBtnLabel != null)
+                        _resultBtnLabel.text = "NEXT";
+                }
+                else
+                {
+                    _resultText.text = "ALL CLEAR!";
+                    _resultText.color = BattleConstants.Highlight;
+                    _resultSubText.text = "All encounters defeated!";
+                    if (_resultBtnLabel != null)
+                        _resultBtnLabel.text = "OK";
+                }
             }
         }
         else
         {
             _resultText.text = "DEFEAT";
             _resultText.color = BattleConstants.Danger;
-            _resultSubText.text = "";
+            _resultSubText.text = hasGameManager ? "Your journey ends here." : "";
             if (_resultBtnLabel != null)
-                _resultBtnLabel.text = "OK";
+                _resultBtnLabel.text = hasGameManager ? "MAIN MENU" : "OK";
         }
     }
 

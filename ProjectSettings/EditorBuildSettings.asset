@@ -4,5 +4,14 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/ScalesOfMemory/MainMenuScene.unity
+    guid: 17a0f7c6a60f43e48807366f10631e95
+  - enabled: 1
+    path: Assets/ScalesOfMemory/MapScene.unity
+    guid: 78de068097080c04c9a36b4c5a88033c
+  - enabled: 1
+    path: Assets/ScalesOfMemory/BattleScene.unity
+    guid: 2a37061ac7cd39246ab692a7b40fe162
   m_configObjects: {}

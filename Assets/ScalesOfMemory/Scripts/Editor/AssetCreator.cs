@@ -15,6 +15,61 @@ public static class AssetCreator
         Debug.Log("[ScalesOfMemory] All assets created!");
     }
 
+    [MenuItem("ScalesOfMemory/Create Run Config")]
+    public static void CreateRunConfig()
+    {
+        EnsureFolders();
+
+        var config = ScriptableObject.CreateInstance<RunConfig>();
+        config.startHP = 80;
+        config.startScales = 20;
+        config.startGold = 0;
+
+        // Starter deck
+        string[] starterCards = { "Strike_1", "Strike_2", "Guard_1", "Guard_2",
+            "Fireball", "IceShield", "LightningArrow", "NatureHeal", "DarkSlash", "ManaFocus" };
+        config.starterDeck = new CardData[starterCards.Length];
+        for (int i = 0; i < starterCards.Length; i++)
+            config.starterDeck[i] = AssetDatabase.LoadAssetAtPath<CardData>(SOPath + "/Cards/" + starterCards[i] + ".asset");
+
+        // All cards (same as starter for now)
+        config.allCards = new CardData[starterCards.Length];
+        System.Array.Copy(config.starterDeck, config.allCards, starterCards.Length);
+
+        // Map generation
+        config.rowsPerPhase = 5;
+        config.minNodesPerRow = 2;
+        config.maxNodesPerRow = 4;
+
+        // Room weights
+        config.battleWeight = 0.5f;
+        config.eliteWeight = 0.15f;
+        config.restWeight = 0.15f;
+        config.shopWeight = 0.1f;
+        config.eventWeight = 0.1f;
+
+        // Enemy pools
+        config.normalEnemies = new EnemyData[]
+        {
+            AssetDatabase.LoadAssetAtPath<EnemyData>(SOPath + "/Enemies/Goblin.asset"),
+            AssetDatabase.LoadAssetAtPath<EnemyData>(SOPath + "/Enemies/Slime.asset"),
+            AssetDatabase.LoadAssetAtPath<EnemyData>(SOPath + "/Enemies/Bat.asset"),
+        };
+        config.eliteEnemies = new EnemyData[]
+        {
+            AssetDatabase.LoadAssetAtPath<EnemyData>(SOPath + "/Enemies/Orc.asset"),
+            AssetDatabase.LoadAssetAtPath<EnemyData>(SOPath + "/Enemies/Skeleton.asset"),
+        };
+        config.bossEnemies = new EnemyData[]
+        {
+            AssetDatabase.LoadAssetAtPath<EnemyData>(SOPath + "/Enemies/Orc.asset"),
+        };
+
+        AssetDatabase.CreateAsset(config, SOPath + "/RunConfig.asset");
+        AssetDatabase.SaveAssets();
+        Debug.Log("[ScalesOfMemory] RunConfig created at " + SOPath + "/RunConfig.asset");
+    }
+
     static string SOPath = "Assets/ScalesOfMemory/ScriptableObjects";
 
     static void EnsureFolders()

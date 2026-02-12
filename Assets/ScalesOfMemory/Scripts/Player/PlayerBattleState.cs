@@ -41,26 +41,20 @@ public class PlayerBattleState
         // Step 1: Block absorbs first
         if (CurrentBlock > 0)
         {
-            if (CurrentBlock >= remaining)
-            {
-                CurrentBlock -= remaining;
-                remaining = 0;
-            }
-            else
-            {
-                remaining -= CurrentBlock;
-                CurrentBlock = 0;
-            }
+            int blocked = System.Math.Min(CurrentBlock, remaining);
+            CurrentBlock -= blocked;
+            remaining -= blocked;
             GameEvents.BlockChanged(CurrentBlock);
+            if (blocked > 0)
+                GameEvents.PlayerBlockAbsorbed(blocked);
         }
 
         // Step 2: Scales absorb next (with element resistance)
         if (remaining > 0 && CurrentScales > 0)
         {
             bool sameElement = attackElement != ElementType.None && attackElement == ScalesElement;
-
-            // Same element = scales are 2x effective (damage to scales halved)
             int effectiveDmg = sameElement ? System.Math.Max(1, remaining / 2) : remaining;
+            int scalesBefore = CurrentScales;
 
             if (CurrentScales >= effectiveDmg)
             {
@@ -69,11 +63,14 @@ public class PlayerBattleState
             }
             else
             {
-                // Scales depleted — reverse-calculate how much raw damage was absorbed
                 int absorbed = sameElement ? CurrentScales * 2 : CurrentScales;
                 remaining = System.Math.Max(0, remaining - absorbed);
                 CurrentScales = 0;
             }
+
+            int scalesLost = scalesBefore - CurrentScales;
+            if (scalesLost > 0)
+                GameEvents.PlayerScalesAbsorbed(scalesLost);
             GameEvents.ScalesChanged(CurrentScales, MaxScales);
         }
 
@@ -113,6 +110,19 @@ public class PlayerBattleState
     public void RecoverScales(int amount)
     {
         CurrentScales = System.Math.Min(MaxScales, CurrentScales + amount);
+        GameEvents.ScalesChanged(CurrentScales, MaxScales);
+    }
+
+    public void SetHP(int hp)
+    {
+        CurrentHP = System.Math.Max(0, System.Math.Min(hp, MaxHP));
+        GameEvents.PlayerHPChanged(CurrentHP, MaxHP);
+    }
+
+    public void SetScales(int current, int max)
+    {
+        MaxScales = max;
+        CurrentScales = System.Math.Max(0, System.Math.Min(current, max));
         GameEvents.ScalesChanged(CurrentScales, MaxScales);
     }
 

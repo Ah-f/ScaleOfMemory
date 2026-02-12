@@ -23,6 +23,11 @@ public class BattleVFX : MonoBehaviour
         GameEvents.OnPlayerDamaged += OnPlayerDamaged;
         GameEvents.OnCardPlayed += OnCardPlayed;
         GameEvents.OnEnemyDefeated += OnEnemyDefeated;
+        GameEvents.OnEnemyDodged += OnEnemyDodged;
+        GameEvents.OnEnemyBlocked += OnEnemyBlocked;
+        GameEvents.OnPlayerBlockAbsorbed += OnPlayerBlockAbsorbed;
+        GameEvents.OnPlayerScalesAbsorbed += OnPlayerScalesAbsorbed;
+        GameEvents.OnEnemyAttacking += OnEnemyAttacking;
     }
 
     void OnEnemyDamaged(EnemyInstance enemy, int dmg)
@@ -72,6 +77,92 @@ public class BattleVFX : MonoBehaviour
             // Shield effect around player area
             SpawnShieldParticles(particleColor);
         }
+    }
+
+    void OnEnemyDodged(EnemyInstance enemy)
+    {
+        if (enemy.ViewObject != null)
+        {
+            var canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+                DamagePopup.CreateText(canvas.transform, enemy.ViewObject.transform.position,
+                    "MISS!", new Color(0.7f, 0.7f, 0.7f));
+        }
+    }
+
+    void OnEnemyBlocked(EnemyInstance enemy, int amount)
+    {
+        if (enemy.ViewObject != null)
+        {
+            var canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+                DamagePopup.CreateText(canvas.transform, enemy.ViewObject.transform.position,
+                    $"BLOCK {amount}", BattleConstants.Highlight);
+        }
+    }
+
+    void OnEnemyAttacking(EnemyInstance enemy, int damage)
+    {
+        // Enemy lunge animation
+        if (enemy.ViewObject != null)
+            StartCoroutine(EnemyLunge(enemy.ViewObject.transform));
+    }
+
+    void OnPlayerBlockAbsorbed(int amount)
+    {
+        // Block popup near player area
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas != null)
+        {
+            Vector3 playerPos = new Vector3(-0.3f, 1.2f, 0f);
+            DamagePopup.CreateText(canvas.transform, playerPos,
+                $"BLOCK -{amount}", BattleConstants.Highlight);
+        }
+    }
+
+    void OnPlayerScalesAbsorbed(int amount)
+    {
+        // Scales popup near player area
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas != null)
+        {
+            Vector3 playerPos = new Vector3(-0.3f, 0.8f, 0f);
+            DamagePopup.CreateText(canvas.transform, playerPos,
+                $"SCALES -{amount}", BattleConstants.Scales);
+        }
+    }
+
+    IEnumerator EnemyLunge(Transform enemyTransform)
+    {
+        if (enemyTransform == null) yield break;
+
+        Vector3 originalPos = enemyTransform.position;
+        Vector3 lungeTarget = originalPos + (Vector3.left + Vector3.down).normalized * 0.5f;
+
+        // Lunge forward
+        float duration = 0.12f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (enemyTransform == null) yield break;
+            elapsed += Time.deltaTime;
+            enemyTransform.position = Vector3.Lerp(originalPos, lungeTarget, elapsed / duration);
+            yield return null;
+        }
+
+        // Return back
+        elapsed = 0f;
+        duration = 0.2f;
+        while (elapsed < duration)
+        {
+            if (enemyTransform == null) yield break;
+            elapsed += Time.deltaTime;
+            enemyTransform.position = Vector3.Lerp(lungeTarget, originalPos, elapsed / duration);
+            yield return null;
+        }
+
+        if (enemyTransform != null)
+            enemyTransform.position = originalPos;
     }
 
     void OnEnemyDefeated(EnemyInstance enemy)
@@ -304,6 +395,11 @@ public class BattleVFX : MonoBehaviour
         GameEvents.OnPlayerDamaged -= OnPlayerDamaged;
         GameEvents.OnCardPlayed -= OnCardPlayed;
         GameEvents.OnEnemyDefeated -= OnEnemyDefeated;
+        GameEvents.OnEnemyDodged -= OnEnemyDodged;
+        GameEvents.OnEnemyBlocked -= OnEnemyBlocked;
+        GameEvents.OnPlayerBlockAbsorbed -= OnPlayerBlockAbsorbed;
+        GameEvents.OnPlayerScalesAbsorbed -= OnPlayerScalesAbsorbed;
+        GameEvents.OnEnemyAttacking -= OnEnemyAttacking;
         Instance = null;
     }
 }
