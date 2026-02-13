@@ -16,6 +16,8 @@ public class MapUI : MonoBehaviour
     TextMeshProUGUI _goldText;
     TextMeshProUGUI _phaseText;
 
+    DeckViewUI _deckView;
+
     void Start()
     {
         BuildUI();
@@ -55,19 +57,45 @@ public class MapUI : MonoBehaviour
         var topRT = topBar.GetComponent<RectTransform>();
 
         _hpText = CreateText("HP", topRT, "", 22,
-            new Vector2(0.02f, 0f), new Vector2(0.35f, 1f));
+            new Vector2(0.02f, 0f), new Vector2(0.3f, 1f));
         _hpText.color = BattleConstants.Safe;
         _hpText.alignment = TextAlignmentOptions.MidlineLeft;
 
         _goldText = CreateText("Gold", topRT, "", 22,
-            new Vector2(0.35f, 0f), new Vector2(0.65f, 1f));
+            new Vector2(0.3f, 0f), new Vector2(0.55f, 1f));
         _goldText.color = BattleConstants.Scales;
         _goldText.alignment = TextAlignmentOptions.Center;
 
-        _phaseText = CreateText("Phase", topRT, "", 22,
-            new Vector2(0.65f, 0f), new Vector2(0.98f, 1f));
-        _phaseText.alignment = TextAlignmentOptions.MidlineRight;
+        _phaseText = CreateText("Phase", topRT, "", 20,
+            new Vector2(0.55f, 0f), new Vector2(0.75f, 1f));
+        _phaseText.alignment = TextAlignmentOptions.Center;
         _phaseText.color = BattleConstants.Highlight;
+
+        // DECK button
+        var deckBtnGo = new GameObject("DeckBtn", typeof(RectTransform), typeof(Image));
+        deckBtnGo.transform.SetParent(topRT, false);
+        var drt = deckBtnGo.GetComponent<RectTransform>();
+        drt.anchorMin = new Vector2(0.77f, 0.1f);
+        drt.anchorMax = new Vector2(0.98f, 0.9f);
+        drt.offsetMin = Vector2.zero;
+        drt.offsetMax = Vector2.zero;
+        deckBtnGo.GetComponent<Image>().color = BattleConstants.Panel;
+        var deckBtn = deckBtnGo.AddComponent<Button>();
+        deckBtn.targetGraphic = deckBtnGo.GetComponent<Image>();
+        deckBtn.onClick.AddListener(ShowDeckView);
+        var deckLabel = new GameObject("Label", typeof(RectTransform));
+        deckLabel.transform.SetParent(deckBtnGo.transform, false);
+        var dlrt = deckLabel.GetComponent<RectTransform>();
+        dlrt.anchorMin = Vector2.zero;
+        dlrt.anchorMax = Vector2.one;
+        dlrt.offsetMin = Vector2.zero;
+        dlrt.offsetMax = Vector2.zero;
+        var dtmp = deckLabel.AddComponent<TextMeshProUGUI>();
+        dtmp.text = "DECK";
+        dtmp.fontSize = 20;
+        dtmp.color = BattleConstants.Highlight;
+        dtmp.alignment = TextAlignmentOptions.Center;
+        dtmp.fontStyle = FontStyles.Bold;
 
         // Scroll area
         var scrollGo = new GameObject("ScrollArea", typeof(RectTransform), typeof(Image));
@@ -377,6 +405,22 @@ public class MapUI : MonoBehaviour
         atmp.fontStyle = FontStyles.Bold;
 
         return ring;
+    }
+
+    void ShowDeckView()
+    {
+        if (_deckView != null) return;
+        _deckView = gameObject.AddComponent<DeckViewUI>();
+        _deckView.Show(transform, HideDeckView);
+    }
+
+    void HideDeckView()
+    {
+        if (_deckView != null)
+        {
+            Destroy(_deckView);
+            _deckView = null;
+        }
     }
 
     void RefreshMap()
