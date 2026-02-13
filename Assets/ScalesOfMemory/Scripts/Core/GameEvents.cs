@@ -23,6 +23,7 @@ public static class GameEvents
     public static event Action<int> OnPlayerBlockAbsorbed;   // amount blocked
     public static event Action<int> OnPlayerScalesAbsorbed;  // amount absorbed
     public static event Action<EnemyInstance, int> OnEnemyAttacking; // enemy, damage (before hit)
+    public static event Action<CardData> OnCardRewardSelected;
 
     public static void CardPlayed(CardInstance card) => OnCardPlayed?.Invoke(card);
     public static void EnemyDamaged(EnemyInstance enemy, int dmg) => OnEnemyDamaged?.Invoke(enemy, dmg);
@@ -44,6 +45,7 @@ public static class GameEvents
     public static void PlayerBlockAbsorbed(int amount) => OnPlayerBlockAbsorbed?.Invoke(amount);
     public static void PlayerScalesAbsorbed(int amount) => OnPlayerScalesAbsorbed?.Invoke(amount);
     public static void EnemyAttacking(EnemyInstance enemy, int damage) => OnEnemyAttacking?.Invoke(enemy, damage);
+    public static void CardRewardSelected(CardData card) => OnCardRewardSelected?.Invoke(card);
 
     public static void Clear()
     {
@@ -67,5 +69,6 @@ public static class GameEvents
         OnPlayerBlockAbsorbed = null;
         OnPlayerScalesAbsorbed = null;
         OnEnemyAttacking = null;
+        OnCardRewardSelected = null;
     }
 }

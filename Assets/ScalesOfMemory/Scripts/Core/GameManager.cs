@@ -111,6 +111,8 @@ public class GameManager : MonoBehaviour
         var node = CurrentRun.mapNodes.Find(n => n.id == CurrentRun.currentNodeId);
         if (node != null) node.cleared = true;
 
+        // Gold reward is now handled by BattleUIManager before the card reward screen
+
         // Restore scales for next encounter
         CurrentRun.currentScales = CurrentRun.maxScales;
 
@@ -162,6 +164,23 @@ public class GameManager : MonoBehaviour
         if (_enemyLookup != null && _enemyLookup.TryGetValue(enemyName, out var data))
             return data;
         return null;
+    }
+
+    public void AddCardToDeck(string cardName)
+    {
+        if (CurrentRun != null)
+            CurrentRun.deckCardNames.Add(cardName);
+    }
+
+    public int GetGoldReward(RoomType roomType)
+    {
+        switch (roomType)
+        {
+            case RoomType.Battle: return Random.Range(10, 21);
+            case RoomType.Elite: return Random.Range(25, 41);
+            case RoomType.Boss: return Random.Range(50, 81);
+            default: return 0;
+        }
     }
 
     void LoadScene(string sceneName)

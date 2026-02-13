@@ -465,12 +465,22 @@ public class BattleUIManager : MonoBehaviour
 
         if (hasGameManager)
         {
-            // Map mode: navigate via GameManager
             if (BattleManager.Instance != null &&
                 BattleManager.Instance.Turns.CurrentState == BattleState.Victory)
-                GameManager.Instance.OnBattleVictory();
+            {
+                // Calculate and apply gold reward before showing card reward
+                var run = GameManager.Instance.CurrentRun;
+                var node = run.mapNodes.Find(n => n.id == run.currentNodeId);
+                int goldReward = node != null ? GameManager.Instance.GetGoldReward(node.roomType) : 0;
+                run.gold += goldReward;
+
+                // Show card reward UI, then proceed to map
+                ShowCardReward(goldReward);
+            }
             else
+            {
                 GameManager.Instance.OnBattleDefeat();
+            }
             return;
         }
 
@@ -481,6 +491,15 @@ public class BattleUIManager : MonoBehaviour
             _hasNextEncounter = false;
             BattleManager.Instance.NextEncounter();
         }
+    }
+
+    void ShowCardReward(int goldReward)
+    {
+        var rewardUI = gameObject.AddComponent<CardRewardUI>();
+        rewardUI.Show(transform, goldReward, () =>
+        {
+            GameManager.Instance.OnBattleVictory();
+        });
     }
 
     void SubscribeEvents()
