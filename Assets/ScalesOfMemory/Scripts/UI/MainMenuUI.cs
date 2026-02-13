@@ -68,8 +68,12 @@ public class MainMenuUI : MonoBehaviour
 
     void OnNewRun()
     {
-        if (GameManager.Instance != null)
-            GameManager.Instance.StartNewRun();
+        var introUI = gameObject.AddComponent<IntroStoryUI>();
+        introUI.Show(transform, () =>
+        {
+            if (GameManager.Instance != null)
+                GameManager.Instance.StartNewRun();
+        });
     }
 
     // === UI Helpers (same pattern as BattleUIManager) ===
