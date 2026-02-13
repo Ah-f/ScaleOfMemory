@@ -99,9 +99,11 @@ public class GameManager : MonoBehaviour
                 GameEvents.RunStateChanged();
                 break;
             case RoomType.Shop:
-            case RoomType.Event:
                 node.cleared = true;
                 GameEvents.RunStateChanged();
+                break;
+            case RoomType.Event:
+                ShowRandomEvent(node);
                 break;
         }
     }
@@ -181,6 +183,26 @@ public class GameManager : MonoBehaviour
             case RoomType.Boss: return Random.Range(50, 81);
             default: return 0;
         }
+    }
+
+    void ShowRandomEvent(MapNode node)
+    {
+        var eventData = EventData.GetRandomEvent();
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            // Fallback: just clear the node
+            node.cleared = true;
+            GameEvents.RunStateChanged();
+            return;
+        }
+
+        var eventUI = canvas.gameObject.AddComponent<EventUI>();
+        eventUI.Show(canvas.transform, eventData, () =>
+        {
+            node.cleared = true;
+            GameEvents.RunStateChanged();
+        });
     }
 
     void LoadScene(string sceneName)
