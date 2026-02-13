@@ -99,8 +99,7 @@ public class GameManager : MonoBehaviour
                 GameEvents.RunStateChanged();
                 break;
             case RoomType.Shop:
-                node.cleared = true;
-                GameEvents.RunStateChanged();
+                ShowShop(node);
                 break;
             case RoomType.Event:
                 ShowRandomEvent(node);
@@ -174,6 +173,13 @@ public class GameManager : MonoBehaviour
             CurrentRun.deckCardNames.Add(cardName);
     }
 
+    public bool RemoveCardFromDeck(string cardName)
+    {
+        if (CurrentRun != null)
+            return CurrentRun.deckCardNames.Remove(cardName);
+        return false;
+    }
+
     public int GetGoldReward(RoomType roomType)
     {
         switch (roomType)
@@ -183,6 +189,24 @@ public class GameManager : MonoBehaviour
             case RoomType.Boss: return Random.Range(50, 81);
             default: return 0;
         }
+    }
+
+    void ShowShop(MapNode node)
+    {
+        var canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            node.cleared = true;
+            GameEvents.RunStateChanged();
+            return;
+        }
+
+        var shopUI = canvas.gameObject.AddComponent<ShopUI>();
+        shopUI.Show(canvas.transform, () =>
+        {
+            node.cleared = true;
+            GameEvents.RunStateChanged();
+        });
     }
 
     void ShowRandomEvent(MapNode node)

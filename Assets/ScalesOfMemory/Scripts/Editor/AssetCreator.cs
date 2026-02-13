@@ -32,9 +32,16 @@ public static class AssetCreator
         for (int i = 0; i < starterCards.Length; i++)
             config.starterDeck[i] = AssetDatabase.LoadAssetAtPath<CardData>(SOPath + "/Cards/" + starterCards[i] + ".asset");
 
-        // All cards (same as starter for now)
-        config.allCards = new CardData[starterCards.Length];
-        System.Array.Copy(config.starterDeck, config.allCards, starterCards.Length);
+        // All cards (starter + new cards for rewards)
+        string[] allCardNames = { "Strike_1", "Strike_2", "Guard_1", "Guard_2",
+            "Fireball", "IceShield", "LightningArrow", "NatureHeal", "DarkSlash", "ManaFocus",
+            "EmberStrike", "Inferno", "FrostBolt", "GlacialWall", "FrozenBreath",
+            "ChainLightning", "SparkShield", "TidalWave", "HealingRain", "AquaShield",
+            "VineWhip", "BarkArmor", "GrowthSurge", "HolySmite", "DivineShield",
+            "RadiantPrayer", "ShadowFang", "DarkPact" };
+        config.allCards = new CardData[allCardNames.Length];
+        for (int i = 0; i < allCardNames.Length; i++)
+            config.allCards[i] = AssetDatabase.LoadAssetAtPath<CardData>(SOPath + "/Cards/" + allCardNames[i] + ".asset");
 
         // Map generation
         config.rowsPerPhase = 5;
@@ -146,6 +153,40 @@ public static class AssetCreator
 
         // Mana Focus
         CreateCard("ManaFocus", "Mana Focus", 0, ElementType.None, CardType.Skill, 0, 0, 0, 2, false, null, 0, 0);
+
+        // === New Cards ===
+
+        // Fire
+        CreateCard("EmberStrike", "Ember Strike", 1, ElementType.Fire, CardType.Attack, 4, 0, 0, 0, true, _burn, 1, 2);
+        CreateCard("Inferno", "Inferno", 3, ElementType.Fire, CardType.Attack, 6, 0, 0, 0, true, _burn, 3, 4);
+
+        // Ice
+        CreateCard("FrostBolt", "Frost Bolt", 2, ElementType.Ice, CardType.Attack, 6, 0, 0, 0, true, _freeze, 1, 0);
+        CreateCard("GlacialWall", "Glacial Wall", 2, ElementType.Ice, CardType.Defend, 0, 10, 0, 0, false, null, 0, 0);
+        CreateCard("FrozenBreath", "Frozen Breath", 1, ElementType.Ice, CardType.Skill, 0, 0, 0, 1, false, null, 0, 0);
+
+        // Lightning
+        CreateCard("ChainLightning", "Chain Lightning", 3, ElementType.Lightning, CardType.Attack, 14, 0, 0, 0, true, null, 0, 0);
+        CreateCard("SparkShield", "Spark Shield", 1, ElementType.Lightning, CardType.Defend, 0, 4, 0, 1, false, null, 0, 0);
+
+        // Water
+        CreateCard("TidalWave", "Tidal Wave", 2, ElementType.Water, CardType.Attack, 7, 0, 0, 0, true, null, 0, 0);
+        CreateCard("HealingRain", "Healing Rain", 2, ElementType.Water, CardType.Skill, 0, 0, 8, 0, false, null, 0, 0);
+        CreateCard("AquaShield", "Aqua Shield", 1, ElementType.Water, CardType.Defend, 0, 4, 2, 0, false, null, 0, 0);
+
+        // Nature
+        CreateCard("VineWhip", "Vine Whip", 1, ElementType.Nature, CardType.Attack, 3, 0, 0, 0, true, _poison, 2, 1);
+        CreateCard("BarkArmor", "Bark Armor", 2, ElementType.Nature, CardType.Defend, 0, 7, 3, 0, false, null, 0, 0);
+        CreateCard("GrowthSurge", "Growth Surge", 1, ElementType.Nature, CardType.Skill, 0, 0, 3, 1, false, null, 0, 0);
+
+        // Light
+        CreateCard("HolySmite", "Holy Smite", 2, ElementType.Light, CardType.Attack, 9, 0, 0, 0, true, null, 0, 0);
+        CreateCard("DivineShield", "Divine Shield", 2, ElementType.Light, CardType.Defend, 0, 8, 3, 0, false, null, 0, 0);
+        CreateCard("RadiantPrayer", "Radiant Prayer", 1, ElementType.Light, CardType.Skill, 0, 0, 4, 1, false, null, 0, 0);
+
+        // Dark
+        CreateCard("ShadowFang", "Shadow Fang", 2, ElementType.Dark, CardType.Attack, 5, 0, 0, 0, true, _poison, 3, 3);
+        CreateCard("DarkPact", "Dark Pact", 0, ElementType.Dark, CardType.Skill, 0, 0, 0, 3, false, null, 0, 0);
     }
 
     static void CreateCard(string fileName, string cardName, int cost, ElementType element, CardType type,
